@@ -10,13 +10,13 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-public class SwaggerConfig {
+public class SwaggerConfig { // Swagger 에 대한 세팅, 구글링 해서 찾아보기
 
     @Bean
     public OpenAPI AlgriOpenAPI() {
         Info info = new Info()
-                .title("Backend API")
-                .description("Backend API 명세서")
+                .title("Algri Backend API")
+                .description("Algri Backend API 명세서")
                 .version("1.0.0");
 
         String jwtSchemeName = "JWT TOKEN";
