@@ -12,7 +12,6 @@ import java.time.LocalDate;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Table(name = "Price")
-@Data
 public class Price extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
