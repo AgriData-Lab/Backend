@@ -12,7 +12,6 @@ import lombok.*;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Table(name = "Kind")
-@Data
 public class Kind extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
