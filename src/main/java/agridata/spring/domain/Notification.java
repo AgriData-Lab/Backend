@@ -3,9 +3,13 @@ package agridata.spring.domain;
 import agridata.spring.domain.common.BaseEntity;
 import agridata.spring.domain.enums.Type;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 
 @Entity
+@Getter
+@Builder
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 @Table(name = "Notification")
 @Data
 public class Notification extends BaseEntity {

@@ -2,11 +2,15 @@ package agridata.spring.domain;
 
 import agridata.spring.domain.common.BaseEntity;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Entity
+@Getter
+@Builder
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 @Table(name = "NotificationLog")
 @Data
 public class NotificationLog extends BaseEntity {

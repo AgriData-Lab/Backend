@@ -4,9 +4,13 @@ import agridata.spring.domain.common.BaseEntity;
 import agridata.spring.domain.enums.Category;
 import agridata.spring.domain.enums.Unit;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 
 @Entity
+@Getter
+@Builder
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 @Table(name = "Kind")
 @Data
 public class Kind extends BaseEntity {

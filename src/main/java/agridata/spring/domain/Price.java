@@ -2,11 +2,15 @@ package agridata.spring.domain;
 
 import agridata.spring.domain.common.BaseEntity;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 
 import java.time.LocalDate;
 
 @Entity
+@Getter
+@Builder
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 @Table(name = "Price")
 @Data
 public class Price extends BaseEntity {
