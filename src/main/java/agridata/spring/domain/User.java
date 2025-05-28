@@ -21,9 +21,6 @@ public class User extends BaseEntity {
 
     private String email;
 
-    // 이 필드 왜 있는 거임..?
-    private Boolean isVerified;
-
     // 사용자 지역
     @Enumerated(EnumType.STRING)
     private Region region;
