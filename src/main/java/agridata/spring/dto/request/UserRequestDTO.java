@@ -1,5 +1,6 @@
 package agridata.spring.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -14,7 +15,10 @@ public class UserRequestDTO {
     // 회원가입 요청 DTO
     public static class SignupDTO {
         private String name;
+
+        @JsonProperty("email")
         private String id_email;
+
         private String password;
         private String region;
         private String interestItem;
@@ -25,7 +29,9 @@ public class UserRequestDTO {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class LoginDTO {
+        @JsonProperty("email")
         private String id_email;
+
         private String password;
     }
 
