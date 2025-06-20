@@ -50,7 +50,8 @@ public class WebSecurityConfig
 
                     .authorizeHttpRequests((authorizeRequests) ->
                             authorizeRequests.requestMatchers("/health","/users/auth/**","/school/**",
-                                            "/v3/api-docs/**", "/swagger-ui/**", "/swagger-resources/**","/chat/**","/mail/**").permitAll()
+                                            "/v3/api-docs/**", "/swagger-ui/**", "/swagger-resources/**","/chat/**","/mail/**",
+                                            "http://localhost:8080/**").permitAll()
 
                                     .anyRequest().authenticated()
                     )
