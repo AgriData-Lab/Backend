@@ -39,3 +39,7 @@ logging:
 # ✅ 추가 권장 (시간대 명시)
 server:
   timezone: Asia/Seoul
+
+kamis:
+  api-key: ${KAMIS_API_KEY}
+  cert-id: ${KAMIS_CERT_ID}
