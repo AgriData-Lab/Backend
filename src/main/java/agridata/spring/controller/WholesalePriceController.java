@@ -1,143 +1,108 @@
 package agridata.spring.controller;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import agridata.spring.dto.response.KamisResponseDTO;
+import agridata.spring.global.ApiResponse;
+import agridata.spring.service.KamisApiService;
+import agridata.spring.service.util.KamisCodeLoader;
+import agridata.spring.service.util.KamisCodeMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.extern.slf4j.Slf4j;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-
+import java.util.ArrayList;
+import java.util.List;
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/wholesale-price")
 public class WholesalePriceController {
     private final ObjectMapper mapper = new ObjectMapper();
 
-    @Value("${WHOLESALE_SERVICE_KEY}")
-    private String serviceKey;
+    private final KamisApiService kamisApiService;
+    private final KamisCodeLoader kamisCodeLoader;
 
-    @Value("${WHOLESALE_SERVICE_ID}")
-    private String serviceId;
-
-    @GetMapping("/test")
-    public JsonNode test() {
-        try {
-            String apiUrl = "http://www.kamis.or.kr/service/price/xml.do" +
-                    "?action=periodProductList" +
-                    "&p_productclscode=02" +
-                    "&p_startday=2022-10-01" +
-                    "&p_endday=2022-12-01" +
-                    "&p_itemcategorycode=200" +
-                    "&p_itemcode=212" +
-                    "&p_kindcode=00" +
-                    "&p_productrankcode=04" +
-                    "&p_countrycode=1101" +
-                    "&p_convert_kg_yn=Y" +
-                    "&p_cert_key=" + serviceKey +
-                    "&p_cert_id=" + serviceId +
-                    "&p_returntype=json";
-
-            return callKamisApi(apiUrl);
-        } catch (Exception e) {
-            throw new RuntimeException("도매 시세 테스트 요청 실패", e);
+    @Operation(summary = "도매 가격 불러오기 API", description = "도매 가격 데이터를 조회합니다.")
+    @GetMapping
+    public ApiResponse<List<KamisResponseDTO.KamisRetailDTO>> getRetailPrice(
+            @RequestParam String itemName,
+            @RequestParam(defaultValue = "1101") String countryCode,
+            @RequestParam String startDate,
+            @RequestParam String endDate
+    ) {
+        KamisCodeMapper.KamisCode code = kamisCodeLoader.getCode(itemName);
+        if (code == null) {
+            log.warn("지원하지 않는 품목명: '{}'", itemName);
+            return ApiResponse.onFailure("404", "지원하지 않는 품목명입니다: " + itemName, null);
         }
-    }
 
-    private JsonNode callKamisApi(String urlString) throws Exception {
-        System.out.println("KAMIS API 호출 URL: " + urlString);
+        log.info("✅ 매핑된 코드: {}", code);
 
-        URL url = new URL(urlString);
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        conn.setRequestMethod("GET");
-
-        int responseCode = conn.getResponseCode();
-        InputStreamReader isr = new InputStreamReader(
-                (responseCode >= 200 && responseCode < 300) ? conn.getInputStream() : conn.getErrorStream(),
-                "UTF-8"
+        String xmlResponse = kamisApiService.getPriceData(
+                code.itemCode(), code.kindCode(), code.itemCategoryCode(), code.rankCode(),
+                countryCode, startDate, endDate
         );
 
-        BufferedReader rd = new BufferedReader(isr);
-        StringBuilder response = new StringBuilder();
-        String line;
-        while ((line = rd.readLine()) != null) {
-            response.append(line);
-        }
-        rd.close();
-        conn.disconnect();
+        log.debug("📄 응답 원문:\n{}", xmlResponse);
 
-        return mapper.readTree(response.toString());
-    }
-
-    @GetMapping
-    public JsonNode getWholesalePrice(
-            @RequestParam(defaultValue = "02") String p_productclscode,
-            @RequestParam(defaultValue = "200") String p_itemcategorycode,
-            @RequestParam(defaultValue = "212") String p_itemcode,
-            @RequestParam(defaultValue = "00") String p_kindcode,
-            @RequestParam(defaultValue = "04") String p_productrankcode,
-            @RequestParam(defaultValue = "1101") String p_countrycode,
-            @RequestParam(defaultValue = "2025-06-10") String p_startday,
-            @RequestParam(defaultValue = "2025-06-20") String p_endday
-    ) {
         try {
-            String serviceKey = "여기에_실제_API_KEY";
-            String serviceId = "여기에_실제_사용자_ID";
-
-            String apiUrl = "http://www.kamis.or.kr/service/price/xml.do?action=periodProductList";
-
-            StringBuilder urlBuilder = new StringBuilder(apiUrl);
-            urlBuilder.append("?p_productclscode=").append(p_productclscode);
-            urlBuilder.append("&p_startday=").append(p_startday);
-            urlBuilder.append("&p_endday=").append(p_endday);
-            urlBuilder.append("&p_itemcategorycode=").append(p_itemcategorycode);
-            urlBuilder.append("&p_itemcode=").append(p_itemcode);
-            urlBuilder.append("&p_kindcode=").append(p_kindcode);
-            urlBuilder.append("&p_productrankcode=").append(p_productrankcode);
-            urlBuilder.append("&p_countrycode=").append(p_countrycode);
-            urlBuilder.append("&p_convert_kg_yn=Y");
-            urlBuilder.append("&p_cert_key=").append(serviceKey);
-            urlBuilder.append("&p_cert_id=").append(serviceId);
-            urlBuilder.append("&p_returntype=json");
-
-            URL url = new URL(urlBuilder.toString());
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("GET");
-
-            int responseCode = conn.getResponseCode();
-            InputStreamReader isr = new InputStreamReader(
-                    (responseCode >= 200 && responseCode < 300) ? conn.getInputStream() : conn.getErrorStream(),
-                    "UTF-8"
-            );
-
-            BufferedReader rd = new BufferedReader(isr);
-            StringBuilder response = new StringBuilder();
-            String line;
-            while ((line = rd.readLine()) != null) {
-                response.append(line);
-            }
-            rd.close();
-            conn.disconnect();
-
-            // 실제 응답이 JSON인지 확인
-            System.out.println("응답: " + response.toString());
-
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode root = mapper.readTree(response.toString());
-
-            return root;
-
+            return ApiResponse.onSuccess(parseRetailPrice(xmlResponse));
         } catch (Exception e) {
-            e.printStackTrace(); // 로그에 예외 출력
-            throw new RuntimeException("도매 시세 데이터를 가져오는 데 실패했습니다.", e);
+            log.error("XML 파싱 실패", e);
+            return ApiResponse.onFailure("500", "XML 파싱 실패: " + e.getMessage(), null);
         }
     }
 
+    private List<KamisResponseDTO.KamisRetailDTO> parseRetailPrice(String xml) {
+        Document doc = Jsoup.parse(xml, "", org.jsoup.parser.Parser.xmlParser());
 
+        String condition = getText(doc, "condition", "N/A");
+        String message = getText(doc, "error_code", "N/A");
+        log.info("📡 KAMIS 응답 상태: {}, 메시지: {}", condition, message);
+
+        Elements items = doc.getElementsByTag("item");
+        log.info("파싱된 item 개수: {}", items.size());
+
+        List<KamisResponseDTO.KamisRetailDTO> resultList = new ArrayList<>();
+        for (Element item : items) {
+            String price = getTagText(item, "price");
+            if (price == null || price.isBlank()) {
+                log.debug("가격 누락 항목:\n{}", item.outerHtml());
+                continue;
+            }
+
+            KamisResponseDTO.KamisRetailDTO dto = KamisResponseDTO.KamisRetailDTO.builder()
+                    .itemname(getTagText(item, "itemname"))
+                    .kindname(getTagText(item, "kindname"))
+                    .countyname(getTagText(item, "countyname"))
+                    .marketname(getTagText(item, "marketname"))
+                    .yyyy(getTagText(item, "yyyy"))
+                    .regday(getTagText(item, "regday"))
+                    .price(price)
+                    .build();
+
+            resultList.add(dto);
+        }
+
+        log.info("최종 응답 항목 수: {}", resultList.size());
+        return resultList;
+    }
+
+    private String getText(Document doc, String tag, String defaultValue) {
+        Element el = doc.selectFirst(tag);
+        return el != null ? el.text() : defaultValue;
+    }
+
+    private String getTagText(Element element, String tag) {
+        Element el = element.selectFirst(tag);
+        return el != null ? el.text() : null;
+    }
 }

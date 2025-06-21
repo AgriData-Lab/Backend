@@ -27,3 +27,19 @@ spring:
           auto: update
         default_batch_fetch_size: 1000
     database: mysql
+
+# ✅ 추가: 로그 레벨 설정 (Jsoup 디버깅 확인용)
+logging:
+  level:
+    agridata.spring.controller: DEBUG   # 컨트롤러 디버깅
+    agridata.spring.service: DEBUG      # 서비스 디버깅
+    org.hibernate.SQL: DEBUG            # Hibernate SQL 로그
+    org.hibernate.type.descriptor.sql: TRACE  # 바인딩된 파라미터 값 보기 (선택)
+
+# ✅ 추가 권장 (시간대 명시)
+server:
+  timezone: Asia/Seoul
+
+kamis:
+  api-key: ${KAMIS_API_KEY}
+  cert-id: ${KAMIS_CERT_ID}
