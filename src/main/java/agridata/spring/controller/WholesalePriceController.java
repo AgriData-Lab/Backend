@@ -73,19 +73,7 @@ public class WholesalePriceController {
             return ApiResponse.onFailure("500", "XML 파싱 실패: " + e.getMessage(), null);
         }
     }
-    /**
-     * 검색 기능
-     * reqeust: 품목,
-     *
-     * response:
-     * */
-    @Operation(summary = "품목 조회하기 api", description = "품목 가격 데이터를 조회하여 그래프에 적용합니다.")
-    @GetMapping("/hipping-periods/find")
-    public ApiResponse<List<WholdesalePriceResponseDTO.BasicDTO>> getSelectPrice() {
 
-
-
-    }
 
     private List<WholdesalePriceResponseDTO.BasicDTO> parseRetailPrice(String xml) {
         Document doc = Jsoup.parse(xml, "", org.jsoup.parser.Parser.xmlParser());
