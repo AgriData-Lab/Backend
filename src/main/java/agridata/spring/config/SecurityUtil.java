@@ -3,19 +3,11 @@ package agridata.spring.config;
 import agridata.spring.domain.User;
 import agridata.spring.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationContext;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 @Slf4j
 public class SecurityUtil {
-
-    private static ApplicationContext applicationContext;
-
-    // ApplicationContext를 외부에서 주입
-    public static void setApplicationContext(ApplicationContext context) {
-        SecurityUtil.applicationContext = context;
-    }
 
     public static Long getCurrentMemberId() {
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -25,13 +17,14 @@ public class SecurityUtil {
         }
 
         try {
-            String userEmail = authentication.getName();  // 토큰에서 가져온 이메일
-            UserRepository repository = applicationContext.getBean(UserRepository.class);
-            User user = repository.findByEmail(userEmail)
-                    .orElseThrow(() -> new RuntimeException("해당 이메일의 사용자를 찾을 수 없습니다."));
+            String userEmail = authentication.getName();
+            // 정적 컨텍스트에서 Bean 접근
+            UserRepository userRepository = ApplicationContextProvider.getApplicationContext().getBean(UserRepository.class);
+            User user = userRepository.findByEmail(userEmail)
+                    .orElseThrow(() -> new RuntimeException("유저를 찾을 수 없습니다: " + userEmail));
             return user.getUserId();
         } catch (Exception e) {
-            throw new RuntimeException("유저 식별 중 오류 발생: " + e.getMessage(), e);
+            throw new RuntimeException("사용자 ID를 가져오는 데 실패했습니다.", e);
         }
     }
 }
