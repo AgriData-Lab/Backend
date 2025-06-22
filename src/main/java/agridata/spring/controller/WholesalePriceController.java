@@ -74,7 +74,6 @@ public class WholesalePriceController {
         }
     }
 
-
     private List<WholdesalePriceResponseDTO.BasicDTO> parseRetailPrice(String xml) {
         Document doc = Jsoup.parse(xml, "", org.jsoup.parser.Parser.xmlParser());
 
