@@ -1,6 +1,6 @@
 package agridata.spring.controller;
 
-import agridata.spring.dto.response.RegionPriceResponseDTO;
+import agridata.spring.dto.response.RegionPriceSimpleDTO;
 import agridata.spring.global.ApiResponse;
 import agridata.spring.service.RegionPriceService;
 import agridata.spring.service.util.KamisCodeLoader;
@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,14 +31,34 @@ public class RegionPriceController {
     private final RegionPriceService regionPriceService;
     private final KamisCodeLoader kamisCodeLoader;
 
+    private List<RegionPriceSimpleDTO> parseSimplePrice(String xml) {
+        Document doc = Jsoup.parse(xml, "", org.jsoup.parser.Parser.xmlParser());
+        Elements items = doc.getElementsByTag("item");
+
+        List<RegionPriceSimpleDTO> resultList = new ArrayList<>();
+        for (Element item : items) {
+            String county = getTagText(item, "countyname");
+            String price = getTagText(item, "price");
+
+            // "등락률"이나 price가 비어있을 경우 제외
+            if (county == null || county.contains("등락률") || price == null || price.isBlank()) {
+                continue;
+            }
+
+            resultList.add(new RegionPriceSimpleDTO(county, price));
+        }
+
+        return resultList;
+    }
+
+
     /**
      * 검색 기능
-     *
-     * */
+     */
     // Todo 랭크 관련 문제 해결
     @Operation(summary = "관심품목의 전국 시세 불러오기 API(도매)", description = "관심품목의 전국 시세 불러오기 API(도매). 관심품목은 백엔드에서 처리합니다.")
     @GetMapping("/hipping-periods")
-    public ApiResponse<List<RegionPriceResponseDTO.BasicDTO>> getWholesalePrice(
+    public ApiResponse<List<RegionPriceSimpleDTO>> getWholesalePrice(
             @RequestParam String itemName,
             @RequestParam(defaultValue = "") String countryCode,
             @RequestParam String startDate
@@ -64,50 +85,14 @@ public class RegionPriceController {
         log.debug("📄 응답 원문:\n{}", xmlResponse);
 
         try {
-            return ApiResponse.onSuccess(parseRetailPrice(xmlResponse));
+            return ApiResponse.onSuccess(parseSimplePrice(xmlResponse));
         } catch (Exception e) {
             log.error("XML 파싱 실패", e);
             return ApiResponse.onFailure("500", "XML 파싱 실패: " + e.getMessage(), null);
         }
     }
 
-    private List<RegionPriceResponseDTO.BasicDTO> parseRetailPrice(String xml) {
-        Document doc = Jsoup.parse(xml, "", org.jsoup.parser.Parser.xmlParser());
 
-        String condition = getText(doc, "condition", "N/A");
-        String message = getText(doc, "error_code", "N/A");
-        log.info("📡 KAMIS 응답 상태: {}, 메시지: {}", condition, message);
-
-        Elements items = doc.getElementsByTag("item");
-        log.info("파싱된 item 개수: {}", items.size());
-
-        List<RegionPriceResponseDTO.BasicDTO> resultList = new ArrayList<>();
-        for (Element item : items) {
-            String price = getTagText(item, "price");
-            if (price == null || price.isBlank()) {
-                log.debug("가격 누락 항목:\n{}", item.outerHtml());
-                continue;
-            }
-
-            RegionPriceResponseDTO.BasicDTO dto = RegionPriceResponseDTO.BasicDTO.builder()
-                    .condition(getTagText(item, "condition"))
-                    .data(getTagText(item, "data"))
-                    .item(getTagText(item, "item"))
-                    .countyname(getTagText(item, "countyname"))
-                    .unit(getTagText(item, "unit"))
-                    .price(getTagText(item, "price"))
-                    .weekprice(getTagText(item, "weekprice"))
-                    .monthprice(getTagText(item, "monthprice"))
-                    .yearprice(getTagText(item, "yearprice"))
-                    .build();
-
-
-            resultList.add(dto);
-        }
-
-        log.info("최종 응답 항목 수: {}", resultList.size());
-        return resultList;
-    }
 
     private String getText(Document doc, String tag, String defaultValue) {
         Element el = doc.selectFirst(tag);
