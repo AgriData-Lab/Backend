@@ -3,6 +3,7 @@ package agridata.spring.controller;
 import agridata.spring.dto.response.RegionPriceSimpleDTO;
 import agridata.spring.global.ApiResponse;
 import agridata.spring.service.RegionPriceService;
+import agridata.spring.service.UserQueryService;
 import agridata.spring.service.util.KamisCodeLoader;
 import agridata.spring.service.util.KamisCodeMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -30,6 +31,7 @@ public class RegionPriceController {
 
     private final RegionPriceService regionPriceService;
     private final KamisCodeLoader kamisCodeLoader;
+    private final UserQueryService userQueryService;
 
     private List<RegionPriceSimpleDTO> parseSimplePrice(String xml) {
         Document doc = Jsoup.parse(xml, "", org.jsoup.parser.Parser.xmlParser());
@@ -59,10 +61,10 @@ public class RegionPriceController {
     @Operation(summary = "관심품목의 전국 시세 불러오기 API(도매)", description = "관심품목의 전국 시세 불러오기 API(도매). 관심품목은 백엔드에서 처리합니다.")
     @GetMapping("/hipping-periods")
     public ApiResponse<List<RegionPriceSimpleDTO>> getWholesalePrice(
-            @RequestParam String itemName,
             @RequestParam(defaultValue = "") String countryCode,
             @RequestParam String startDate
     ) {
+        String itemName = userQueryService.getUserPreferItem();
         KamisCodeMapper.KamisCode code = kamisCodeLoader.getCode(itemName);
         if (code == null) {
             log.warn("지원하지 않는 품목명: '{}'", itemName);
