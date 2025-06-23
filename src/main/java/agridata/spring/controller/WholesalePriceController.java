@@ -44,10 +44,10 @@ public class WholesalePriceController {
      *       리스트
      * */
     @Operation(summary = "도매 가격 불러오기 API(품목 조회하기)", description = "도매 가격 데이터를 조회합니다. 품목, 지역(코드), 시작일, 마지막일을 받아 도매 가격 리스트를 반환합니다.")
-    @GetMapping("/hipping-periods")
+    @GetMapping("/shipping-periods")
     public ApiResponse<List<WholdesalePriceResponseDTO.BasicDTO>> getWholesalePrice(
             @RequestParam String itemName,
-            @RequestParam(defaultValue = "1101") String countryCode,
+            @RequestParam(defaultValue = "") String countryCode,
             @RequestParam String startDate,
             @RequestParam String endDate
     ) {
@@ -89,6 +89,11 @@ public class WholesalePriceController {
             String price = getTagText(item, "price");
             if (price == null || price.isBlank()) {
                 log.debug("가격 누락 항목:\n{}", item.outerHtml());
+                continue;
+            }
+            String countyname = getTagText(item, "countyname");
+            if(countyname == null || countyname.isBlank() || countyname.equals("평년") || countyname.equals("평균")) {
+                log.debug("지역 누락 항목:\n{}", item.outerHtml());
                 continue;
             }
 
