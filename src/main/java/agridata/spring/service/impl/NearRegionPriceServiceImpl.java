@@ -1,0 +1,71 @@
+package agridata.spring.service.impl;
+
+import agridata.spring.service.NearRegionPriceService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
+
+
+@Slf4j
+@Service
+@Transactional
+@RequiredArgsConstructor
+public class NearRegionPriceServiceImpl implements NearRegionPriceService {
+
+    private final RestTemplate restTemplate;
+
+    @Value("${kamis.api-key}")
+    private String apiKey;
+
+    @Value("${kamis.cert-id}")
+    private String certId;
+
+    @Override
+    public String getPriceData(String itemCode, String kindCode, String itemCategoryCode, String rankCode,
+                               String countryCode, String regDay) {
+
+        StringBuilder urlBuilder = new StringBuilder("https://www.kamis.or.kr/service/price/xml.do");
+        urlBuilder.append("?action=ItemInfo")
+                .append("&p_cert_key=").append(apiKey)
+                .append("&p_cert_id=").append(certId)
+                .append("&p_returntype=xml")
+                .append("&p_productclscode=02") // 01: 소매, 02: 도매
+                .append("&p_regday=").append(regDay)
+                .append("&p_itemcategorycode=").append(itemCategoryCode)
+                .append("&p_itemcode=").append(itemCode)
+                .append("&p_convert_kg_yn=Y");
+
+        // 선택적 파라미터
+        if (kindCode != null && !kindCode.isBlank()) {
+            urlBuilder.append("&p_kindcode=").append(kindCode);
+        }
+        if (rankCode != null && !rankCode.isBlank()) {
+            urlBuilder.append("&p_productrankcode=").append(rankCode);
+        }
+        if (countryCode != null && !countryCode.isBlank()) {
+            urlBuilder.append("&p_countycode=").append(countryCode);
+        }
+
+        String url = urlBuilder.toString();
+        log.info("📡 KAMIS 단건 요청 URL: {}", url);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("User-Agent", "Mozilla/5.0");
+
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+
+        return response.getBody();
+    }
+
+    private String formatDate(String yyyymmdd) {
+        return yyyymmdd.substring(0, 4) + "-" + yyyymmdd.substring(4, 6) + "-" + yyyymmdd.substring(6, 8);
+    }
+}
