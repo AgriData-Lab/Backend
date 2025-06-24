@@ -4,12 +4,10 @@ import agridata.spring.dto.request.UserRequestDTO;
 import agridata.spring.dto.response.UserResponseDTO;
 import agridata.spring.global.ApiResponse;
 import agridata.spring.service.UserCommandService;
+import agridata.spring.service.UserQueryService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -17,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
 
     private final UserCommandService userCommandService;
+    private final UserQueryService userQueryService;
 
     // 회원가입 API
     @Operation(summary = "회원가입 API", description = "회원가입 API입니다.")
@@ -32,6 +31,12 @@ public class UserController {
     public ApiResponse<UserResponseDTO.LoginDTO> login(@RequestBody UserRequestDTO.LoginDTO loginDTO){
         UserResponseDTO.LoginDTO result = userCommandService.login(loginDTO);
         return ApiResponse.onSuccess(result);
+    }
+
+    @GetMapping("/prefer-item")
+    public ApiResponse<String> getPreferItem(){
+        var preferItem = userQueryService.getUserPreferItem();
+        return ApiResponse.onSuccess(preferItem);
     }
 
 
