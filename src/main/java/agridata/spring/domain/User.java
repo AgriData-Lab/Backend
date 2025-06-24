@@ -19,6 +19,7 @@ public class User extends BaseEntity {
     private String nickname;
     private String password;
 
+
     private String email;
 
     // 사용자 지역
