@@ -19,10 +19,11 @@ public class User extends BaseEntity {
     private String nickname;
     private String password;
 
-
+    @Column(nullable = false)
     private String email;
 
     // 사용자 지역
+    @Column(length = 20)
     @Enumerated(EnumType.STRING)
     private Region region;
 

@@ -33,11 +33,23 @@ public class UserController {
         return ApiResponse.onSuccess(result);
     }
 
+    // 사용자 관심품목 조회 API
+    @Operation(summary = "사용자 관심품목 조회 API", description = "사용자 관심품목 조회 API입니다.")
     @GetMapping("/prefer-item")
     public ApiResponse<String> getPreferItem(){
         var preferItem = userQueryService.getUserPreferItem();
         return ApiResponse.onSuccess(preferItem);
     }
+
+    // 사용자 지역 조회 API
+    @Operation(summary = "사용자 지역 조회 API", description = "사용자 지역 조회 API입니다.")
+    @GetMapping("/region")
+    public ApiResponse<String> getRegion() {
+        var region = userQueryService.getUserRegion();
+        return ApiResponse.onSuccess(region);
+    }
+
+
 
 
 }

@@ -30,7 +30,7 @@ public class UserCommandServiceImpl implements UserCommandService {
     public UserResponseDTO.SignupDTO create(UserRequestDTO.SignupDTO dto) {
         User user = User.builder()
                 .nickname(dto.getName())
-                .email(dto.getId_email())
+                .email(dto.getEmail())
                 .password(passwordEncoder.encode(dto.getPassword())) // 비밀번호를 BCrypt 암호화해서 저장
                 .region(Region.valueOf(dto.getRegion()))
                 .interestItem(dto.getInterestItem())
@@ -45,7 +45,7 @@ public class UserCommandServiceImpl implements UserCommandService {
     public UserResponseDTO.LoginDTO login(UserRequestDTO.LoginDTO dto) {
         // Optional 사용하는 이유 == "값이 있을 수도, 없을 수도 있다"상황 명확히 표현 (null 체크 강제)
         // Optional = null이 될 수 있는 값을 감싸는 Wrapper(포장) 클래스
-        final Optional<User> user = userRepository.findByEmail(dto.getId_email());
+        final Optional<User> user = userRepository.findByEmail(dto.getEmail());
         // 존재하는 지 + 암호화된 비밀번호 비교 
         if(user.isPresent() && passwordEncoder.matches(dto.getPassword(), user.get().getPassword())){
             return UserResponseDTO.LoginDTO.builder().token(tokenProvider.create(user.get())) // JWt 발급(이메일 기반)

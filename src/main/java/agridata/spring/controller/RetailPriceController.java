@@ -88,9 +88,11 @@ public class RetailPriceController {
             }
 
             String itemname = getTagText(item, "itemname");
+            /*
             if (itemname == null || itemname.isBlank()) {
                 log.warn("⚠️ itemname 누락 항목 존재: {}", item.outerHtml());
             }
+             */
 
             String countyname = getTagText(item, "countyname");
             if(countyname == null || countyname.isBlank() || countyname.equals("평년") || countyname.equals("평균")) {
