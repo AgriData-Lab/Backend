@@ -19,4 +19,10 @@ public class UserQueryServiceImpl implements UserQueryService {
         Long memberId = SecurityUtil.getCurrentMemberId();
         return userRepository.findById(memberId).get().getInterestItem();
     }
+
+    @Override
+    public String getUserRegion() {
+        Long memberId = SecurityUtil.getCurrentMemberId();
+        return userRepository.findById(memberId).get().getRegion().name();
+    }
 }
