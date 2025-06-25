@@ -20,7 +20,7 @@ import java.util.List;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/retail")
+@RequestMapping("/kamis") // /retail -> /kamis로 변경 (Kamis 파일들은 OpenAPI 기본 틀로 놔둘 예정)
 public class PriceController {
 
     private final KamisApiService kamisApiService;
