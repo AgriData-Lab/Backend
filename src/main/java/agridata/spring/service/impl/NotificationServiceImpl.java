@@ -73,12 +73,16 @@ public class NotificationServiceImpl {
                 }
                 String priceText = item.selectFirst("price") != null ? item.selectFirst("price").text().replaceAll(",", "") : "";
 
+                String itemName = item.selectFirst("itemname") != null
+                        ? item.selectFirst("itemname").text()
+                        : "알 수 없음"; // 또는 n.getItemName()
                 try {
                     int price = Integer.parseInt(priceText);
 
                     // 사용자가 설정한 가격보다 낮아졌을 때 알림
                     if (price > n.getTargetPrice()) {
                         NotificationLog logEntity = NotificationLog.builder()
+                                .field(itemName)
                                 .notification(n)
                                 .currentPrice(price)
                                 .triggeredAt(LocalDateTime.now())

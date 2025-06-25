@@ -9,6 +9,7 @@ import java.time.format.DateTimeFormatter;
 @Data
 @Builder
 public class NotificationLogDTO {
+    private String itemName;
     private String message;
     private String triggeredAt;
     private String type;
@@ -17,6 +18,7 @@ public class NotificationLogDTO {
 
     public static NotificationLogDTO from(NotificationLog log) {
         return NotificationLogDTO.builder()
+                .itemName(log.getField())
                 .message(log.getMessage())
                 .triggeredAt(log.getTriggeredAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")))
                 .type(log.getType())
