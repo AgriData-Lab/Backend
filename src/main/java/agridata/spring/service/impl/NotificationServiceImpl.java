@@ -16,6 +16,8 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -32,33 +34,74 @@ public class NotificationServiceImpl {
     private final UserRepository userRepository;
     private final ItemCsvMapper itemCsvMapper;
 
+    @Transactional
     public void checkAndLogPriceAlerts() {
         List<Notification> notifications = notificationRepository.findAllByIsActiveTrue();
+        log.info("🔔 알림 확인 시작: 총 {}건", notifications.size());
 
         for (Notification n : notifications) {
             ItemCsvMapper.ItemCode code = itemCsvMapper.getCode(n.getItemName());
-            if (code == null) continue;
+            if (code == null) {
+                log.warn("❌ 매핑 실패: itemName = {}", n.getItemName());
+                continue;
+            }
 
             String responseXml = priceApiService.getPriceData(
-                    code.getItemCode(), null, code.getItemCategoryCode(), null,
-                    String.valueOf(n.getUser().getRegion()), getToday(), getToday()
+                    code.getItemCode(),
+                    null,
+                    code.getItemCategoryCode(),
+                    null,
+                    "", // 지역 코드 미지정
+                    getToday(),
+                    getToday()
             );
 
-            int currentPrice = parsePrice(responseXml);
-            if (currentPrice >= n.getTargetPrice()) {
-                NotificationLog log = NotificationLog.builder()
-                        .notification(n)
-                        .currentPrice(currentPrice)
-                        .triggeredAt(LocalDateTime.now())
-                        .message("설정한 가격 이상 도달: " + currentPrice)
-                        //.field(n.getKind().getKindName())
-                        .type(n.getType().name())
-                        .build();
-                notificationLogRepository.save(log);
+            log.info("📥 응답 XML ({}): {}", n.getItemName(), responseXml);
+
+            // XML 파싱
+            Document doc = Jsoup.parse(responseXml, "", org.jsoup.parser.Parser.xmlParser());
+            List<Element> items = doc.select("data > item");
+
+
+
+            for (Element item : items) {
+                // 평균, 평년 제거
+                Element countyElem = item.selectFirst("countyname");
+                String county = countyElem != null ? countyElem.text() : "";
+                if (county.equals("평년") || county.equals("평균") || county.isBlank()) {
+                    continue;
+                }
+                String priceText = item.selectFirst("price") != null ? item.selectFirst("price").text().replaceAll(",", "") : "";
+
+                try {
+                    int price = Integer.parseInt(priceText);
+
+                    // 사용자가 설정한 가격보다 낮아졌을 때 알림
+                    if (price > n.getTargetPrice()) {
+                        NotificationLog logEntity = NotificationLog.builder()
+                                .notification(n)
+                                .currentPrice(price)
+                                .triggeredAt(LocalDateTime.now())
+                                .message("가격 상승 감지 (" + county + "): " + price + "원")
+                                .type(n.getType().name())
+                                .build();
+
+                        notificationLogRepository.save(logEntity);
+                        log.info("✅ 알림 저장 완료: {} (지역: {})", logEntity, county);
+                    } else {
+                        log.info("⏹ 조건 미충족 - 지역: {}, 현재가: {}, 기준가: {}", county, price, n.getTargetPrice());
+                    }
+
+                } catch (NumberFormatException e) {
+                    log.warn("⚠ 가격 파싱 오류: '{}' (지역: {})", priceText, county);
+                }
             }
         }
     }
 
+
+
+    @Transactional(readOnly = true)
     public void createNotification(Long userId, NotificationRequestDTO.CreateRequest dto) {
         User user = userRepository.findById(userId).orElseThrow();
 

@@ -11,7 +11,7 @@ public class NotificationScheduler {
 
     private final NotificationServiceImpl notificationServiceImpl;
 
-    @Scheduled(cron = "0 0 * * * *") // 매 시간 정각마다
+    @Scheduled(cron = "0 0 0 * * *") // 매 시간 정각마다
     public void runNotificationJob() {
         notificationServiceImpl.checkAndLogPriceAlerts();
     }
