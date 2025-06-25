@@ -105,7 +105,7 @@ public class NotificationServiceImpl {
 
 
 
-    @Transactional(readOnly = true)
+    @Transactional
     public void createNotification(Long userId, NotificationRequestDTO.CreateRequest dto) {
         User user = userRepository.findById(userId).orElseThrow();
 
