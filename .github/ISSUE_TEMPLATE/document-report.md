@@ -1,8 +1,8 @@
 ---
-name: "📝 Document"
+name: "\U0001F4DD Document"
 about: 문서에 관해 적습니다
-title: "📝 [Document] - "
-labels: ":memo: docs"
+title: "\U0001F4DD [Document] - "
+labels: ''
 assignees: ''
 
 ---
