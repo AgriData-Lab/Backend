@@ -16,20 +16,21 @@ public class Notification extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long notificationId;
 
-    private Long productId;
+    private String itemName;
     private Integer targetPrice;
     private Boolean isActive;
 
     @Enumerated(EnumType.STRING)
+    @Column(length = 10)
     private Type type;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "kind_id")
-    private Kind kind;
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    @JoinColumn(name = "kind_id")
+//    private Kind kind;
 
 }
 
