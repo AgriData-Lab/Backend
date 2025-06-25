@@ -59,7 +59,7 @@ public class RegionPriceController {
      */
     // Todo 랭크 관련 문제 해결
     @Operation(summary = "관심품목의 전국 시세 불러오기 API(도매)", description = "관심품목의 전국 시세 불러오기 API(도매). 관심품목은 백엔드에서 처리합니다.")
-    @GetMapping("/hipping-periods")
+    @GetMapping("/shipping-periods")
     public ApiResponse<List<RegionPriceSimpleDTO>> getWholesalePrice(
             @RequestParam(defaultValue = "") String countryCode,
             @RequestParam String startDate
