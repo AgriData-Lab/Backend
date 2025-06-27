@@ -1,7 +1,7 @@
 package agridata.spring.service.impl;
 
 import agridata.spring.domain.User;
-import agridata.spring.domain.enums.Region;
+import agridata.spring.dto.LocationCodeLoader;
 import agridata.spring.dto.request.UserRequestDTO;
 import agridata.spring.dto.response.UserResponseDTO;
 import agridata.spring.repository.UserRepository;
@@ -24,19 +24,33 @@ public class UserCommandServiceImpl implements UserCommandService {
     private final TokenProvider tokenProvider;
 
     private final PasswordEncoder passwordEncoder; // WebSecurityConfig에서 @Bean으로 설정해놓아서, 주입하기만 하면 됨
+    private final LocationCodeLoader locationCodeLoader;
 
     // 회원가입
     @Override
     public UserResponseDTO.SignupDTO create(UserRequestDTO.SignupDTO dto) {
+        // 🔒 Null 체크 먼저!
+        if (dto.getCountyCode() == null || dto.getCountyCode().isBlank()) {
+            throw new IllegalArgumentException("지역명이 입력되지 않았습니다.");
+        }
+
+        String countyInput = dto.getCountyCode().trim();
+
+        // 🔹 지역 코드 조회
+        String regionCode = locationCodeLoader.getCodeByName(countyInput);
+        if (regionCode == null) {
+            throw new IllegalArgumentException("유효하지 않은 지역명입니다: " + countyInput);
+        }
+
         User user = User.builder()
                 .nickname(dto.getName())
                 .email(dto.getEmail())
-                .password(passwordEncoder.encode(dto.getPassword())) // 비밀번호를 BCrypt 암호화해서 저장
-                .region(Region.valueOf(dto.getRegion()))
+                .password(passwordEncoder.encode(dto.getPassword()))
+                .countyCode(regionCode)
                 .interestItem(dto.getInterestItem())
                 .build();
-        User result = userRepository.save(user);
 
+        User result = userRepository.save(user);
         return UserResponseDTO.SignupDTO.builder().id(result.getUserId()).build();
     }
 

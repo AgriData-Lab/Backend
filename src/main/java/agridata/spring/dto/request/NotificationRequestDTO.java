@@ -17,5 +17,6 @@ public class NotificationRequestDTO {
         private Integer targetPrice;
         private String type; // 도매 or 소매
         private Boolean isActive;
+        private String countyCode; // 추가
     }
 }
