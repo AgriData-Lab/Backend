@@ -24,9 +24,10 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-@Service
+
 @RequiredArgsConstructor
 @Slf4j
+@Service
 public class NotificationServiceImpl {
 
     private final WholesalePriceApiService wholsalePriceApiService;

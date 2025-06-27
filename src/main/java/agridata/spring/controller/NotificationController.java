@@ -10,11 +10,13 @@ import agridata.spring.global.error.status.ErrorStatus;
 import agridata.spring.repository.NotificationLogRepository;
 import agridata.spring.service.impl.NotificationServiceImpl;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/notifications")
@@ -33,6 +35,7 @@ public class NotificationController {
 
         Long userId = securityUtil.getCurrentMemberId();
         notificationServiceImpl.createNotification(userId, dto);
+        log.info("📥 알림 생성 요청: {}", dto); // ✅ 여기에 전체 DTO 로그 찍기
         return ApiResponse.onSuccess(null);
     }
 
