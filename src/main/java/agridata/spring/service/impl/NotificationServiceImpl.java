@@ -91,8 +91,9 @@ public class NotificationServiceImpl {
                     int price = Integer.parseInt(priceText);
 
                     boolean shouldNotify =
-                            (n.getType() == Type.WHOLESALE && price > n.getTargetPrice()) ||
-                                    (n.getType() == Type.RETAIL && price < n.getTargetPrice());
+                            (n.getType() == Type.WHOLESALE && price >= n.getTargetPrice()) ||
+                                    (n.getType() == Type.RETAIL && price <= n.getTargetPrice());
+
                     if (shouldNotify) {
                         String direction = (n.getType() == Type.WHOLESALE) ? "상승" : "하락";
                         NotificationLog logEntity = NotificationLog.builder()
