@@ -28,6 +28,10 @@ public class Notification extends BaseEntity {
     @JoinColumn(name = "user_id")
     private User user;
 
+    // 지역 추가
+    @Column(length = 10)
+    private String countyCode;
+
 //    @ManyToOne(fetch = FetchType.LAZY)
 //    @JoinColumn(name = "kind_id")
 //    private Kind kind;

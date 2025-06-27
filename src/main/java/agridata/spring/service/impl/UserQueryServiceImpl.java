@@ -23,6 +23,21 @@ public class UserQueryServiceImpl implements UserQueryService {
     @Override
     public String getUserRegion() {
         Long memberId = SecurityUtil.getCurrentMemberId();
-        return userRepository.findById(memberId).get().getRegion().name();
+        return userRepository.findById(memberId).get().getCountyCode();
+    }
+
+    @Override
+    public boolean isDuplicate(String type, String value) {
+        if ("name".equals(type)) {
+            boolean exists = userRepository.existsByNickname(value);
+            System.out.println("닉네임 중복 여부: " + value + " → " + exists);
+            return exists;
+        } else if ("email".equals(type)) {
+            boolean exists = userRepository.existsByEmail(value);
+            System.out.println("이메일 중복 여부: " + value + " → " + exists);
+            return exists;
+        } else {
+            throw new IllegalArgumentException("Invalid type");
+        }
     }
 }

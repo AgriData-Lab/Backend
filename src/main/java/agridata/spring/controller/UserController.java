@@ -25,6 +25,13 @@ public class UserController {
         return ApiResponse.onSuccess(result);
     }
 
+    // 닉네임, 이메일 중복 조회
+    @GetMapping("/auth/check-duplicate")
+    public ApiResponse<?> checkDuplicate(@RequestParam("type") String type, @RequestParam("value") String value) {
+        boolean isDuplicate = userQueryService.isDuplicate(type, value);
+        return ApiResponse.onSuccess(isDuplicate);
+    }
+
     // 로그인 API
     @Operation(summary = "로그인 API", description = "로그인 API입니다.")
     @PostMapping("/auth/signin")

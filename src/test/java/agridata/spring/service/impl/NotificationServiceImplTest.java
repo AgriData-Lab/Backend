@@ -3,13 +3,13 @@ package agridata.spring.service.impl;
 import agridata.spring.domain.Notification;
 import agridata.spring.domain.NotificationLog;
 import agridata.spring.domain.User;
-import agridata.spring.domain.enums.Region;
 import agridata.spring.domain.enums.Type;
 import agridata.spring.dto.ItemCsvMapper;
 import agridata.spring.dto.request.NotificationRequestDTO;
 import agridata.spring.repository.NotificationLogRepository;
 import agridata.spring.repository.NotificationRepository;
 import agridata.spring.repository.UserRepository;
+import agridata.spring.service.RetailPriceApiService;
 import agridata.spring.service.WholesalePriceApiService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,6 +35,7 @@ class NotificationServiceImplTest {
     @Mock private UserRepository userRepository;
     @Mock private ItemCsvMapper itemCsvMapper;
     @Mock private WholesalePriceApiService wholesalePriceApiService;
+    @Mock private RetailPriceApiService retailPriceApiService;
     @Mock private NotificationLogRepository notificationLogRepository;
 
     @InjectMocks
@@ -126,7 +127,7 @@ class NotificationServiceImplTest {
     @Test
     void 가격이_올라가면_알림() {
         // given
-        User user = User.builder().userId(1L).region(Region.수도권).build();
+        User user = User.builder().userId(1L).countyCode("1101").build();
         Notification notification = Notification.builder()
                 .notificationId(1L)
                 .user(user)
@@ -154,7 +155,7 @@ class NotificationServiceImplTest {
 
         // 실제 객체에 mock 주입
         notificationService = new NotificationServiceImpl(
-                wholesalePriceApiService, notificationRepository,
+                wholesalePriceApiService, retailPriceApiService, notificationRepository,
                 notificationLogRepository, userRepository, itemCsvMapper
         );
 
@@ -164,12 +165,13 @@ class NotificationServiceImplTest {
         // then
         verify(notificationLogRepository, times(1)).save(any());
     }
+    // 도매
     @Test
-    void 가격이_설정값보다_높으면_알림로그_저장된다() {
+    void 가격이_도매가격_설정값보다_높으면_알림로그_저장된다() {
         // given
         User user = User.builder()
                 .userId(1L)
-                .region(agridata.spring.domain.enums.Region.수도권)
+                .countyCode("1101")  // 예: 서울의 코드값
                 .build();
 
         Notification notification = Notification.builder()
@@ -195,12 +197,13 @@ class NotificationServiceImplTest {
         when(itemCsvMapper.getCode("쌀")).thenReturn(code);
         when(wholesalePriceApiService.getPriceData(
                 eq("111"), isNull(), eq("100"), isNull(),
-                eq("수도권"), any(), any()
+                eq("1101"), any(), any()
         )).thenReturn(sampleXml);
 
         // when
         notificationService = new NotificationServiceImpl(
                 wholesalePriceApiService,
+                retailPriceApiService,
                 notificationRepository,
                 notificationLogRepository,
                 userRepository,
@@ -227,6 +230,65 @@ class NotificationServiceImplTest {
         assertThat(savedLog.getType()).isEqualTo("WHOLESALE");
         assertThat(savedLog.getMessage()).contains("설정한 가격 이상 도달");
     }
+    // 소매
+    @Test
+    void 가격이_소매가격_설정값보다_낮으면_알림로그_저장된다() {
+        // given
+        User user = User.builder()
+                .userId(1L)
+                .countyCode("1101")  // 예: 서울
+                .build();
+
+        Notification notification = Notification.builder()
+                .notificationId(1L)
+                .user(user)
+                .itemName("양배추")
+                .targetPrice(8000)  // 사용자가 설정한 목표 가격
+                .type(Type.RETAIL)
+                .isActive(true)
+                .build();
+
+        ItemCsvMapper.ItemCode code = new ItemCsvMapper.ItemCode("200", "222", "양배추");
+
+        String sampleXml = """
+        <response>
+            <item>
+                <price>7000</price>  // ✅ 설정값보다 낮음
+            </item>
+        </response>
+        """;
+
+        when(notificationRepository.findAllByIsActiveTrue()).thenReturn(List.of(notification));
+        when(itemCsvMapper.getCode("양배추")).thenReturn(code);
+        when(retailPriceApiService.getPriceData(
+                eq("200"), isNull(), eq("222"), isNull(),
+                eq("1101"), any(), any()
+        )).thenReturn(sampleXml);
+
+        notificationService = new NotificationServiceImpl(
+                wholesalePriceApiService,
+                retailPriceApiService,
+                notificationRepository,
+                notificationLogRepository,
+                userRepository,
+                itemCsvMapper
+        );
+
+        // when
+        notificationService.checkAndLogPriceAlerts();
+
+        // then
+        ArgumentCaptor<NotificationLog> captor = ArgumentCaptor.forClass(NotificationLog.class);
+        verify(notificationLogRepository, times(1)).save(captor.capture());
+
+        NotificationLog savedLog = captor.getValue();
+
+        // 검증
+        assertThat(savedLog.getCurrentPrice()).isEqualTo(7000);
+        assertThat(savedLog.getType()).isEqualTo("RETAIL");
+        assertThat(savedLog.getMessage()).contains("설정한 가격 이하 도달");
+    }
+
 
 
 }

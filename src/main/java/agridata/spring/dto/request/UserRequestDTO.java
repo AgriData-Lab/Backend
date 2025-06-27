@@ -17,7 +17,7 @@ public class UserRequestDTO {
         private String name;
         private String email;
         private String password;
-        private String region;
+        private String countyCode;
         private String interestItem;
     }
 

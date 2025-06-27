@@ -38,7 +38,6 @@ public class RetailPriceApiServiceImpl implements RetailPriceApiService {
                 .append("&p_productclscode=01") // 01: 소매, 02: 도매
                 .append("&p_itemcategorycode=").append(itemCategoryCode)
                 .append("&p_itemcode=").append(itemCode)
-                .append("&p_countrycode=").append(countryCode)
                 .append("&p_convert_kg_yn=Y")
                 .append("&p_startday=").append(formatDate(startDate))
                 .append("&p_endday=").append(formatDate(endDate));
@@ -48,6 +47,10 @@ public class RetailPriceApiServiceImpl implements RetailPriceApiService {
         }
         if (rankCode != null && !rankCode.isBlank()) {
             urlBuilder.append("&p_productrankcode=").append(rankCode);
+        }
+
+        if (countryCode != null && !countryCode.isBlank()) {
+            urlBuilder.append("&p_countrycode=").append(countryCode);
         }
 
         String url = urlBuilder.toString();

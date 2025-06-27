@@ -9,6 +9,7 @@ import agridata.spring.dto.request.NotificationRequestDTO;
 import agridata.spring.repository.NotificationLogRepository;
 import agridata.spring.repository.NotificationRepository;
 import agridata.spring.repository.UserRepository;
+import agridata.spring.service.RetailPriceApiService;
 import agridata.spring.service.WholesalePriceApiService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,12 +24,14 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-@Service
+
 @RequiredArgsConstructor
 @Slf4j
+@Service
 public class NotificationServiceImpl {
 
-    private final WholesalePriceApiService priceApiService;
+    private final WholesalePriceApiService wholsalePriceApiService;
+    private final RetailPriceApiService retailPriceApiService;
     private final NotificationRepository notificationRepository;
     private final NotificationLogRepository notificationLogRepository;
     private final UserRepository userRepository;
@@ -46,15 +49,21 @@ public class NotificationServiceImpl {
                 continue;
             }
 
-            String responseXml = priceApiService.getPriceData(
-                    code.getItemCode(),
-                    null,
-                    code.getItemCategoryCode(),
-                    null,
-                    "", // 지역 코드 미지정
-                    getToday(),
-                    getToday()
-            );
+            String responseXml;
+            if (n.getType() == Type.WHOLESALE) {
+                responseXml = wholsalePriceApiService.getPriceData(
+                        code.getItemCode(), null, code.getItemCategoryCode(), null, null,
+                        getToday(), getToday()
+                );
+            } else {
+                String countyCode =  n.getCountyCode();  // RETAIL은 지역 필수
+
+                responseXml = retailPriceApiService.getPriceData(
+                        code.getItemCode(), null, code.getItemCategoryCode(), null,
+                        countyCode, getToday(), getToday()
+                );
+
+            }
 
             log.info("📥 응답 XML ({}): {}", n.getItemName(), responseXml);
 
@@ -76,17 +85,22 @@ public class NotificationServiceImpl {
                 String itemName = item.selectFirst("itemname") != null
                         ? item.selectFirst("itemname").text()
                         : "알 수 없음"; // 또는 n.getItemName()
+
+                // price가 사용자가 설정한 가격(getTargetPrice)보다 높아지면 도매, 낮아지면 소매
                 try {
                     int price = Integer.parseInt(priceText);
 
-                    // 사용자가 설정한 가격보다 낮아졌을 때 알림
-                    if (price > n.getTargetPrice()) {
+                    boolean shouldNotify =
+                            (n.getType() == Type.WHOLESALE && price > n.getTargetPrice()) ||
+                                    (n.getType() == Type.RETAIL && price < n.getTargetPrice());
+                    if (shouldNotify) {
+                        String direction = (n.getType() == Type.WHOLESALE) ? "상승" : "하락";
                         NotificationLog logEntity = NotificationLog.builder()
                                 .field(itemName)
                                 .notification(n)
                                 .currentPrice(price)
                                 .triggeredAt(LocalDateTime.now())
-                                .message("가격 상승 감지 (" + county + "): " + price + "원")
+                                .message("가격 " + direction + " 감지 (" + county + "): " + price + "원")
                                 .type(n.getType().name())
                                 .build();
 
@@ -99,6 +113,7 @@ public class NotificationServiceImpl {
                 } catch (NumberFormatException e) {
                     log.warn("⚠ 가격 파싱 오류: '{}' (지역: {})", priceText, county);
                 }
+
             }
         }
     }
@@ -126,6 +141,7 @@ public class NotificationServiceImpl {
                 .type(typeEnum) // 💡 변환된 enum 사용
                 .targetPrice(dto.getTargetPrice())
                 .isActive(dto.getIsActive())
+                .countyCode(dto.getCountyCode())  // 🆕 지역 추가
                 .build();
 
         notificationRepository.save(notification);

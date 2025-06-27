@@ -10,22 +10,23 @@ import lombok.*;
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-@Table(name = "User")
+@Table(name = "user")
 public class User extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userId;
 
+    @Column(name = "nickname", nullable = false)
     private String nickname;
     private String password;
 
-    @Column(nullable = false)
+    @Column(name = "email", nullable = false)
     private String email;
 
-    // 사용자 지역
-    @Column(length = 20)
-    @Enumerated(EnumType.STRING)
-    private Region region;
+    // 정확한 지역명을 위해 enum(권역별) -> String(지역별) 수정
+    @Column(length = 10)
+    private String countyCode;
+
 
     // 사용자 관심 품목
     private String interestItem;

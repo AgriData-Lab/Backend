@@ -2,6 +2,7 @@ package agridata.spring.controller;
 
 import agridata.spring.config.SecurityUtil;
 import agridata.spring.domain.NotificationLog;
+import agridata.spring.dto.LocationCodeLoader;
 import agridata.spring.dto.request.NotificationRequestDTO;
 import agridata.spring.dto.response.NotificationLogDTO;
 import agridata.spring.global.ApiResponse;
@@ -9,10 +10,13 @@ import agridata.spring.global.error.status.ErrorStatus;
 import agridata.spring.repository.NotificationLogRepository;
 import agridata.spring.service.impl.NotificationServiceImpl;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/notifications")
@@ -21,6 +25,7 @@ public class NotificationController {
     private final NotificationLogRepository notificationLogRepository;
     private final NotificationServiceImpl notificationServiceImpl;
     private  SecurityUtil securityUtil;
+    private final LocationCodeLoader locationCodeLoader;
 
     @PostMapping("/notifications")
     public ApiResponse<NotificationRequestDTO.CreateRequest> createNotification(@RequestBody NotificationRequestDTO.CreateRequest dto) {
@@ -30,6 +35,7 @@ public class NotificationController {
 
         Long userId = securityUtil.getCurrentMemberId();
         notificationServiceImpl.createNotification(userId, dto);
+        log.info("📥 알림 생성 요청: {}", dto); // ✅ 여기에 전체 DTO 로그 찍기
         return ApiResponse.onSuccess(null);
     }
 
@@ -42,7 +48,7 @@ public class NotificationController {
                 .findByNotification_User_UserIdOrderByTriggeredAtDesc(userId);
 
         List<NotificationLogDTO> result = logs.stream()
-                .map(NotificationLogDTO::from)
+                .map(log -> NotificationLogDTO.from(log, locationCodeLoader))  // 💡 지역명 포함 변환
                 .toList();
 
         return ApiResponse.onSuccess(result);
