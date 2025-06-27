@@ -53,6 +53,9 @@ public class LocationCodeLoader {
     }
 
     public String getNameByCode(String code) {
+        if (code == null || code.trim().isEmpty()) {
+            return "알 수 없음";  // 또는 "" 등 기본값 지정
+        }
         return codeToNameMap.get(code.trim());
     }
 
