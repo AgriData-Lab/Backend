@@ -27,55 +27,58 @@ import java.io.PrintWriter;
 @Configuration
 @EnableWebSecurity
 @Slf4j
-public class WebSecurityConfig
-{
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+public class WebSecurityConfig {
 
     @Autowired
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
     protected SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         try {
-
             http.csrf(AbstractHttpConfigurer::disable)
                     .httpBasic(AbstractHttpConfigurer::disable)
                     .cors(Customizer.withDefaults())
-                    .sessionManagement((sessionManagement) ->
+                    .sessionManagement(sessionManagement ->
                             sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                     )
+                    .authorizeHttpRequests(authorizeRequests ->
+                            authorizeRequests
+                                    .requestMatchers(
+                                            "/health",
+                                            "/users/auth/**",
+                                            "/school/**",
+                                            "/v3/api-docs/**",
+                                            "/swagger-ui/**",
+                                            "/swagger-resources/**",
+                                            "/chat/**",
+                                            "/mail/**",
+                                            "/api/**",
+                                            "/login",
+                                            "/signup"
 
-                    .authorizeHttpRequests((authorizeRequests) ->
-                            authorizeRequests.requestMatchers("/health","/users/auth/**","/school/**",
-                                            "/v3/api-docs/**", "/swagger-ui/**", "/swagger-resources/**","/chat/**","/mail/**",
-                                            "http://localhost:8080/**").permitAll()
-
+                                    ).permitAll()
                                     .anyRequest().authenticated()
                     )
-                    .exceptionHandling((exceptionConfig) ->
-                            exceptionConfig
-                                    .authenticationEntryPoint(unauthorizedEntryPoint)
-                    ); // 401 403 관련 예외처리
-            ;
-            http.addFilterAfter(
-                    jwtAuthenticationFilter,
-                    UsernamePasswordAuthenticationFilter.class
-            );
+                    .exceptionHandling(exceptionConfig ->
+                            exceptionConfig.authenticationEntryPoint(unauthorizedEntryPoint)
+                    );
+
+            http.addFilterAfter(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
             return http.build();
         } catch (Exception e) {
-
             throw new RuntimeException(e);
         }
-
     }
 
     private final AuthenticationEntryPoint unauthorizedEntryPoint =
             (request, response, authException) -> {
-
-                ApiResponse<?> apiResponse = new ApiResponse(false,"401","인증이 필요합니다.",null);
+                ApiResponse<?> apiResponse = new ApiResponse<>(false, "401", "인증이 필요합니다.", null);
                 response.setCharacterEncoding("UTF-8");
                 response.setStatus(HttpStatus.UNAUTHORIZED.value());
                 response.setContentType(MediaType.APPLICATION_JSON_VALUE);
@@ -83,7 +86,5 @@ public class WebSecurityConfig
                 PrintWriter writer = response.getWriter();
                 writer.write(new ObjectMapper().writeValueAsString(apiResponse));
                 writer.flush();
-
             };
-
 }
