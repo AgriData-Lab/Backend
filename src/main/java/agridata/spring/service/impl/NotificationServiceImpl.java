@@ -39,6 +39,21 @@ public class NotificationServiceImpl {
 
     @Transactional
     public void checkAndLogPriceAlerts() {
+
+        // 1. 중복 방지: 이미 오늘 17:00~내일 16:59 사이에 저장된 알림이 있는지 확인
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime start = now.getHour() >= 17
+                ? now.withHour(17).withMinute(0).withSecond(0).withNano(0)
+                : now.minusDays(1).withHour(17).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime end = start.plusDays(1).withHour(16).withMinute(59).withSecond(59).withNano(999999999);
+
+        boolean alreadyLogged = notificationLogRepository.existsByTriggeredAtBetween(start, end);
+        if (alreadyLogged) {
+            log.info("🛑 이미 알림이 생성된 기간입니다. ({} ~ {})", start, end);
+            return;
+        }
+
+
         List<Notification> notifications = notificationRepository.findAllByIsActiveTrue();
         log.info("🔔 알림 확인 시작: 총 {}건", notifications.size());
 
@@ -164,5 +179,7 @@ public class NotificationServiceImpl {
 
     private String getToday() {
         return LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        // 테스트용 "20250627"
+
     }
 }
