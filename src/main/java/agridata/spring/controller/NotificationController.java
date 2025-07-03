@@ -11,9 +11,9 @@ import agridata.spring.repository.NotificationLogRepository;
 import agridata.spring.service.impl.NotificationServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
@@ -44,8 +44,21 @@ public class NotificationController {
     @GetMapping
     public ApiResponse<List<NotificationLogDTO>> getUserNotifications() {
         Long userId = securityUtil.getCurrentMemberId();
+
+        // 17시 기준으로 오늘 또는 어제 알림 범위 설정
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime start, end;
+
+        if (now.getHour() >= 17) {
+            start = now.withHour(17).withMinute(0).withSecond(0).withNano(0);
+            end = start.plusDays(1).withHour(16).withMinute(59).withSecond(59);
+        } else {
+            start = now.minusDays(1).withHour(17).withMinute(0).withSecond(0).withNano(0);
+            end = now.withHour(16).withMinute(59).withSecond(59);
+        }
+
         List<NotificationLog> logs = notificationLogRepository
-                .findByNotification_User_UserIdOrderByTriggeredAtDesc(userId);
+                .findByNotification_User_UserIdAndTriggeredAtBetweenOrderByTriggeredAtDesc(userId, start, end);
 
         List<NotificationLogDTO> result = logs.stream()
                 .map(log -> NotificationLogDTO.from(log, locationCodeLoader))  // 💡 지역명 포함 변환
