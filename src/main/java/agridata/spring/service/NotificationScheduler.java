@@ -15,7 +15,7 @@ public class NotificationScheduler {
 
 //    @Scheduled(cron = "0 */1 * * * *") // 매 1분마다 실행
 
-    @Scheduled(cron = "0 */5 17 * * *") // 매일 17:00 ~ 17:55 사이 5분 간격 실행
+    @Scheduled(cron = "0 * 17 * * *") // 매일 17:00 ~ 17:59 사이 1분 간격 실행
 
 
 
